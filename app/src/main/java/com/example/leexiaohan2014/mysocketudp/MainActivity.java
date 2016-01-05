@@ -57,7 +57,7 @@ public class MainActivity extends ActionBarActivity {
                     send();
                 }
                 else {
-                    text.append("-------IP or PORT empty-------\n");
+                    //text.append("-------IP or PORT empty-------\n");
                 }
 
             }

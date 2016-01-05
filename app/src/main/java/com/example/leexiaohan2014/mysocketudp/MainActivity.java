@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -25,9 +26,13 @@ public class MainActivity extends ActionBarActivity {
     EditText ip;
     EditText port;
     EditText editText;
+    TextView textListen;
+    EditText port2;
     String ipaddress;
     String portaddress;
+    String portaddress2;
     String stringToSend;
+    String result;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +41,9 @@ public class MainActivity extends ActionBarActivity {
 
         ip = (EditText) findViewById(R.id.ip);
         port = (EditText) findViewById(R.id.port);
+        port2 = (EditText) findViewById(R.id.port2);
         editText = (EditText) findViewById(R.id.editText);
-
+        textListen = (TextView) findViewById(R.id.textListen);
 
         findViewById(R.id.send).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -51,14 +57,26 @@ public class MainActivity extends ActionBarActivity {
                     send();
                 }
                 else {
-                    //text.append("-------IP or PORT empty-------\n");
+                    text.append("-------IP or PORT empty-------\n");
                 }
 
             }
         });
 
 
+        findViewById(R.id.listen).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                portaddress2 = port2.getText().toString();
+                listen();
+                //textListen.append("text received from server" + result);
+            }
+        });
+
+
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -92,9 +110,9 @@ public class MainActivity extends ActionBarActivity {
                     //首先创建一个DatagramSocket对象
                     DatagramSocket socket=null;
                     if (socket == null){
-                        socket = new DatagramSocket(null);
+                        socket = new DatagramSocket(12222);
                         socket.setReuseAddress(true);
-                        socket.bind(new InetSocketAddress(12222));
+                        //socket.bind(new InetSocketAddress(12222));
                     }
 
                     //创建一个InetAddree
@@ -123,5 +141,58 @@ public class MainActivity extends ActionBarActivity {
         };
         read.execute();
 
+    }
+
+    public void listen() {
+
+        AsyncTask<Void, String,Void> read = new AsyncTask<Void, String, Void>() {
+
+            @Override
+            protected Void doInBackground(Void... params) {
+                try {
+                    //创建一个DatagramSocket对象，并指定监听的端口号
+                    DatagramSocket socket=null;
+                    if (socket == null){
+                        socket = new DatagramSocket(null);
+                        socket.setReuseAddress(true);
+                        socket.bind(new InetSocketAddress(Integer.parseInt(portaddress2)));
+                    }
+                    //DatagramSocket socket = new DatagramSocket(4567);
+
+                    byte data [] = new byte[4096];
+
+                    //创建一个空的DatagramPacket对象
+
+                    DatagramPacket packet = new DatagramPacket(data,data.length);
+
+                    //使用receive方法接收客户端所发送的数据，
+
+                    //如果客户端没有发送数据，该进程就停滞在这里
+                    for (int i = 0; i < 10; i++) {
+                        socket.receive(packet);
+                        result = new String(packet.getData(),packet.getOffset(), packet.getLength());
+                        publishProgress(result);
+                    }
+                    socket.close();
+
+                    //System.out.println("result--->" + result);
+                    //textListen.append("text received from server" + result + "\n");
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+
+                }
+                return null;
+            }
+
+            @Override
+            protected void onProgressUpdate(String... values) {
+                textListen.append("text received: "+values[0]);
+                //textListen.append("text received from server" + result);
+                super.onProgressUpdate(values);
+
+            }
+        };
+        read.execute();
     }
 }
